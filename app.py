@@ -81,19 +81,19 @@ def extract_palette_from_image(img_bytes, num_colors=6):
 # -------------------------------
 # Palette Generators
 # -------------------------------
-def generate_pastel_palette(k=5):
+def generate_pastel_palette(k=9):
     return [
         colorsys.hsv_to_rgb(random.random(), random.uniform(0.15, 0.35), random.uniform(0.9, 1.0))
         for _ in range(k)
     ]
 
-def generate_vivid_palette(k=5):
+def generate_vivid_palette(k=9):
     return [
         colorsys.hsv_to_rgb(random.random(), random.uniform(0.8, 1.0), random.uniform(0.8, 1.0))
         for _ in range(k)
     ]
 
-def generate_mono_palette(k=5, base_h=0.60):
+def generate_mono_palette(k=9, base_h=0.60):
     return [
         colorsys.hsv_to_rgb(
             (base_h + random.uniform(-0.05, 0.05)) % 1.0,
@@ -103,10 +103,10 @@ def generate_mono_palette(k=5, base_h=0.60):
         for _ in range(k)
     ]
 
-def generate_random_palette(k=5):
+def generate_random_palette(k=9):
     return [(random.random(), random.random(), random.random()) for _ in range(k)]
 
-def get_palette(mode, k=6):
+def get_palette(mode, k=10):
     if mode == "csv":
         return load_palette_from_csv(PALETTE_FILE)
     if mode == "reference":
