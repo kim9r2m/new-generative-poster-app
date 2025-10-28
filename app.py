@@ -38,7 +38,7 @@ def read_csv_palette(filepath):
             raise ValueError("Missing RGB columns")
         return df
     except Exception:
-        return pd.read_csv(io.StringIO(DEFAULT_CSV_DATA))
+        return pd.DataFrame(columns=["name", "r", "g", "b"])
 
 def save_csv_palette(df, filepath):
     """Save DataFrame to CSV."""
@@ -56,7 +56,7 @@ def load_palette_from_csv(filepath):
     """Load RGB tuples from CSV."""
     df = read_csv_palette(filepath)
     if df.empty:
-        df = pd.read_csv(io.StringIO(DEFAULT_CSV_DATA))
+        return [(0.5, 0.5, 0.5)]
     return [(float(r), float(g), float(b)) for r, g, b in zip(df.r, df.g, df.b)]
 
 def extract_palette_from_image(img_bytes, num_colors=6):
@@ -140,10 +140,11 @@ def draw_poster(n_layers, wobble, palette_mode, seed, edge_color, show_edges):
     ax.set_facecolor((0.98, 0.98, 0.98))
     palette = get_palette(palette_mode)
 
+    # Convert hex to RGB tuple (0–1 scale)
     if show_edges:
         edge_rgb = tuple(int(edge_color.lstrip("#")[i:i+2], 16)/255.0 for i in (0, 2, 4))
     else:
-        edge_rgb = (0, 0, 0, 0)
+        edge_rgb = (0, 0, 0, 0)  # transparent
 
     for _ in range(n_layers):
         cx, cy = random.random(), random.random()
@@ -221,6 +222,7 @@ if st.button("🎨 Generate Poster"):
         fig = draw_poster(layers, wobble, palette_mode, seed, edge_color, show_edges)
         st.pyplot(fig)
 
+        # Add a download button
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
         buf.seek(0)
