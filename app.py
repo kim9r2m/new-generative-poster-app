@@ -130,7 +130,7 @@ def blob(center=(0.5, 0.5), r=0.3, points=200, wobble=0.15):
     y = center[1] + radii * np.sin(angles)
     return x, y
 
-def draw_poster(n_layers, wobble, palette_mode, seed):
+def draw_poster(n_layers, wobble, palette_mode, seed, edge_color, show_edges):
     """Draw a generative poster and return a Matplotlib Figure."""
     random.seed(seed)
     np.random.seed(seed)
@@ -139,6 +139,12 @@ def draw_poster(n_layers, wobble, palette_mode, seed):
     ax.axis("off")
     ax.set_facecolor((0.98, 0.98, 0.98))
     palette = get_palette(palette_mode)
+
+    # Convert hex to RGB tuple (0–1 scale)
+    if show_edges:
+        edge_rgb = tuple(int(edge_color.lstrip("#")[i:i+2], 16)/255.0 for i in (0, 2, 4))
+    else:
+        edge_rgb = (0, 0, 0, 0)  # transparent
 
     for _ in range(n_layers):
         cx, cy = random.random(), random.random()
@@ -150,7 +156,8 @@ def draw_poster(n_layers, wobble, palette_mode, seed):
             y,
             color=color,
             alpha=random.uniform(0.25, 0.6),
-            edgecolor=(0, 0, 0, 0),
+            edgecolor=edge_rgb,
+            linewidth=1.5 if show_edges else 0.0
         )
 
     ax.text(
@@ -186,8 +193,13 @@ layers = st.sidebar.slider("Number of Layers", 1, 50, 15)
 wobble = st.sidebar.slider("Wobble Intensity", 0.01, 2.0, 0.5)
 seed = st.sidebar.number_input("Random Seed", 0, 9999, 0)
 
+# 🖌 Edge Control
+st.sidebar.subheader("🎨 Blob Edge Settings")
+show_edges = st.sidebar.checkbox("Show Blob Edges", value=False)
+edge_color = st.sidebar.color_picker("Edge Color", "#000000")
+
 # --- Image Upload for Reference Palette ---
-st.sidebar.subheader("🎨 Extract Colors from Image")
+st.sidebar.subheader("📷 Extract Colors from Image")
 uploaded_file = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 if uploaded_file:
     with st.spinner("Extracting colors..."):
@@ -207,7 +219,7 @@ st.pyplot(fig_palette)
 # --- Generate Poster ---
 if st.button("🎨 Generate Poster"):
     try:
-        fig = draw_poster(layers, wobble, palette_mode, seed)
+        fig = draw_poster(layers, wobble, palette_mode, seed, edge_color, show_edges)
         st.pyplot(fig)
 
         # Add a download button
