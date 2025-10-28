@@ -205,8 +205,7 @@ if uploaded_file:
     with st.spinner("Extracting colors..."):
         extracted_palette = extract_palette_from_image(uploaded_file.getvalue(), num_colors=10)
         st.sidebar.success(f"Extracted {len(extracted_palette)} colors into reference.csv")
-        st.sidebar.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-
+        st.sidebar.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 # --- Palette Visualization ---
 st.subheader("Current Palette Preview")
 palette_to_show = get_palette(palette_mode)
