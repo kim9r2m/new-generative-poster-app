@@ -40,17 +40,19 @@ def read_csv_palette(filepath):
     except Exception:
         return pd.DataFrame(columns=["name", "r", "g", "b"])
 
-def add_color(name, r, g, b, filepath=PALETTE_FILE):
-    """Add one color to a CSV palette."""
-    df = read_csv_palette(filepath)
-    new_color = pd.DataFrame(
-        [{"name": name, "r": float(r), "g": float(g), "b": float(b)}]
-    )
-    df = pd.concat([df, new_color], ignore_index=True)
+def save_csv_palette(df, filepath):
+    """Save DataFrame to CSV."""
     df.to_csv(filepath, index=False)
+
+def add_color(name, r, g, b, filepath):
+    """Add one color to CSV palette."""
+    df = read_csv_palette(filepath)
+    new_color = pd.DataFrame([{"name": name, "r": r, "g": g, "b": b}])
+    df = pd.concat([df, new_color], ignore_index=True)
+    save_csv_palette(df, filepath)
     return df
 
-def load_palette_from_csv(filepath=PALETTE_FILE):
+def load_palette_from_csv(filepath):
     """Load RGB tuples from CSV."""
     df = read_csv_palette(filepath)
     if df.empty:
@@ -73,7 +75,7 @@ def extract_palette_from_image(img_bytes, num_colors=6):
         for i, c in enumerate(colors)
     ]
     df = pd.DataFrame(extracted)
-    df.to_csv(REFERENCE_PALETTE_FILE, index=False)
+    save_csv_palette(df, REFERENCE_PALETTE_FILE)
     return [(d["r"], d["g"], d["b"]) for d in extracted]
 
 # -------------------------------
@@ -162,7 +164,7 @@ def draw_poster(n_layers, wobble, palette_mode, seed):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
 
-    return fig  # ✅ Return the Figure, not plt
+    return fig
 
 # -------------------------------
 # Streamlit UI
@@ -222,12 +224,43 @@ if st.button("🎨 Generate Poster"):
         st.error("❌ Error while generating poster:")
         st.text(traceback.format_exc())
 
-# --- CSV Table Display ---
-st.subheader("📁 Palette CSV Files")
-col1, col2 = st.columns(2)
-with col1:
-    st.caption("palette.csv")
-    st.dataframe(read_csv_palette(PALETTE_FILE))
-with col2:
-    st.caption("reference.csv")
-    st.dataframe(read_csv_palette(REFERENCE_PALETTE_FILE))
+# --- Editable CSV Tables ---
+st.subheader("📁 Manage Palettes in Real Time")
+
+tab1, tab2 = st.tabs(["🎨 palette.csv", "📷 reference.csv"])
+
+# --- Palette Editor 1: palette.csv ---
+with tab1:
+    st.caption("Add or delete colors from your main palette.")
+    df_palette = read_csv_palette(PALETTE_FILE)
+
+    with st.form("add_palette_color"):
+        new_name = st.text_input("Color Name", key="p_name")
+        new_color = st.color_picker("Pick a Color", "#ffffff", key="p_color")
+        r, g, b = tuple(int(new_color.lstrip("#")[i:i+2], 16)/255.0 for i in (0, 2, 4))
+        submitted = st.form_submit_button("➕ Add Color")
+        if submitted and new_name:
+            add_color(new_name, r, g, b, PALETTE_FILE)
+            st.success(f"Added '{new_name}' to palette.csv")
+            st.rerun()
+
+    edited_palette = st.data_editor(df_palette, num_rows="dynamic", use_container_width=True)
+    save_csv_palette(edited_palette, PALETTE_FILE)
+
+# --- Palette Editor 2: reference.csv ---
+with tab2:
+    st.caption("Add or delete colors from the reference palette (from images).")
+    df_ref = read_csv_palette(REFERENCE_PALETTE_FILE)
+
+    with st.form("add_reference_color"):
+        new_name_ref = st.text_input("Color Name", key="r_name")
+        new_color_ref = st.color_picker("Pick a Color", "#ffffff", key="r_color")
+        r2, g2, b2 = tuple(int(new_color_ref.lstrip("#")[i:i+2], 16)/255.0 for i in (0, 2, 4))
+        submitted_ref = st.form_submit_button("➕ Add Color")
+        if submitted_ref and new_name_ref:
+            add_color(new_name_ref, r2, g2, b2, REFERENCE_PALETTE_FILE)
+            st.success(f"Added '{new_name_ref}' to reference.csv")
+            st.rerun()
+
+    edited_ref = st.data_editor(df_ref, num_rows="dynamic", use_container_width=True)
+    save_csv_palette(edited_ref, REFERENCE_PALETTE_FILE)
