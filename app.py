@@ -200,12 +200,21 @@ edge_color = st.sidebar.color_picker("Edge Color", "#000000")
 
 # --- Image Upload for Reference Palette ---
 st.sidebar.subheader("📷 Extract Colors from Image")
+
+# 유지할 상태값: 방금 업로드했는지 여부
+if "last_uploaded" not in st.session_state:
+    st.session_state.last_uploaded = None
+
 uploaded_file = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-if uploaded_file:
-    with st.spinner("Extracting colors..."):
-        extracted_palette = extract_palette_from_image(uploaded_file.getvalue(), num_colors=10)
-        st.sidebar.success(f"Extracted {len(extracted_palette)} colors into reference.csv")
-        st.sidebar.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+
+if uploaded_file is not None:
+    # 새로운 파일이 업로드되었을 때만 색 추출 실행
+    if uploaded_file.name != st.session_state.last_uploaded:
+        st.session_state.last_uploaded = uploaded_file.name
+        with st.spinner("Extracting colors..."):
+            extracted_palette = extract_palette_from_image(uploaded_file.getvalue(), num_colors=10)
+            st.sidebar.success(f"Extracted {len(extracted_palette)} colors into reference.csv")
+    st.sidebar.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
 # --- Palette Visualization ---
 st.subheader("Current Palette Preview")
